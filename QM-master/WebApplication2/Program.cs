@@ -85,7 +85,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // Disabled for Docker (container runs HTTP on port 8080)
 app.UseRouting();
 
 app.UseCors("AllowReactApp");
@@ -104,6 +104,11 @@ app.MapControllerRoute(
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+    
+    // Ensure the database is created and all migrations are applied
+    var context = services.GetRequiredService<ApplicationDbContext>();
+    context.Database.Migrate();
+
     var userManager = services.GetRequiredService<UserManager<User>>();
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole<int>>>();
 

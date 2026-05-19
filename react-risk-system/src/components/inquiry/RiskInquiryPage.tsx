@@ -1,20 +1,14 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Search,
-  X,
   AlertCircle,
   MapPin,
   User,
   Activity,
-  Phone,
-  Mail,
-  ShieldCheck,
-  ClipboardList,
-  Siren,
-  Filter,
-  Target
+  Filter
 } from 'lucide-react';
 import { calculateRiskScore, getRiskColor, getRiskLabel } from '../../utils/riskCalculations';
+import RiskDetailModal from '../shared/RiskDetailModal';
 
 interface Category {
   id: number;
@@ -176,7 +170,8 @@ const RiskInquiryPage: React.FC = () => {
       .filter(Boolean);
   };
 
-  const normalizeRisk = (risk: RawRisk): Risk => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const normalizeRisk = useCallback((risk: RawRisk): Risk => {
     const rawActions = risk.riskActions ?? risk.riskactions ?? risk.RiskActions;
     const rawCauses = risk.riskCauses ?? risk.riskcauses ?? risk.RiskCauses;
     const rawGoals = risk.riskGoals ?? risk.riskgoals ?? risk.RiskGoals;
@@ -216,7 +211,7 @@ const RiskInquiryPage: React.FC = () => {
             : mappedActionsByType.avoidance,
       strategicGoals: toStringArray(risk.strategicGoals)
     };
-  };
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -227,9 +222,9 @@ const RiskInquiryPage: React.FC = () => {
           : {};
 
         const [catRes, riskRes, respRes] = await Promise.all([
-          fetch('https://localhost:7002/api/category', { headers }),
-          fetch('https://localhost:7002/api/risk?custom=false&include=RiskActions.Action,RiskCauses.Cause,RiskGoals.StrategicGoal', { headers }),
-          fetch('https://localhost:7002/api/responsible', { headers })
+          fetch('http://localhost:7002/api/category', { headers }),
+          fetch('http://localhost:7002/api/risk?custom=false&include=RiskActions.Action,RiskCauses.Cause,RiskGoals.StrategicGoal', { headers }),
+          fetch('http://localhost:7002/api/responsible', { headers })
         ]);
 
         setCategories(await catRes.json());
@@ -244,7 +239,7 @@ const RiskInquiryPage: React.FC = () => {
     };
 
     fetchData();
-  }, []);
+  }, [normalizeRisk]);
 
   const getResponsibleEntity = (responsibleId: number) => {
     return responsibleEntities.find(e => e.id === responsibleId);
@@ -577,210 +572,11 @@ const RiskInquiryPage: React.FC = () => {
       </div>
 
       {showModal && selectedRisk && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-              <button onClick={closeModal} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <X size={24} />
-              </button>
-              <h2 className="text-2xl font-bold text-right">تفاصيل المخاطرة</h2>
-            </div>
-
-            <div className="p-6 space-y-6">
-              <div className="text-right">
-                <h3 className="text-3xl font-bold text-gray-800 mb-2">{selectedRisk.riskName}</h3>
-                <div className="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-lg font-medium">
-                  {selectedRisk.categoryName}
-                </div>
-              </div>
-
-              <div
-                className={`${getRiskColor(
-                  calculateRiskScore(selectedRisk.impact, selectedRisk.likelihood)
-                )} text-white rounded-xl p-6`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="text-right">
-                    <p className="text-lg opacity-90 mb-1">درجة الخطر</p>
-                    <p className="text-5xl font-bold">
-                      {calculateRiskScore(selectedRisk.impact, selectedRisk.likelihood)}
-                    </p>
-                    <p className="text-xl mt-2">
-                      {getRiskLabel(calculateRiskScore(selectedRisk.impact, selectedRisk.likelihood))}
-                    </p>
-                  </div>
-
-                  <div className="flex gap-6">
-                    <div className="text-center">
-                      <p className="text-sm opacity-90 mb-1">شدة أثر الخطر</p>
-                      <div className="bg-white bg-opacity-20 rounded-lg px-6 py-3">
-                        <p className="text-4xl font-bold">{selectedRisk.impact}</p>
-                      </div>
-                    </div>
-
-                    <div className="text-center">
-                      <p className="text-sm opacity-90 mb-1">احتمالية الخطر</p>
-                      <div className="bg-white bg-opacity-20 rounded-lg px-6 py-3">
-                        <p className="text-4xl font-bold">{selectedRisk.likelihood}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {toArray(selectedRisk.strategicGoals).length > 0 && (
-                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                  <h4 className="text-lg font-bold text-right mb-4 flex items-center justify-end gap-2">
-                    <Target size={20} />
-                    المؤشر / الغاية الإستراتيجية
-                  </h4>
-
-                  <div className="space-y-3 text-right">
-                    {toArray(selectedRisk.strategicGoals).map((goal, index) => (
-                      <div
-                        key={`strategic-goal-${index}`}
-                        className="bg-white border border-gray-200 rounded-xl p-4 text-gray-700 leading-relaxed"
-                      >
-                        {goal}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <h4 className="text-lg font-bold text-right mb-3 flex items-center justify-end gap-2">
-                    <User size={20} />
-                    الجهة المسؤولة عن معالجة الخطر
-                  </h4>
-                  <p className="text-gray-700 text-right text-lg">
-                    {getResponsibleEntity(selectedRisk.responsibleId)?.entityName || 'غير محددة'}
-                  </p>
-                </div>
-
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <h4 className="text-lg font-bold text-right mb-3 flex items-center justify-end gap-2">
-                    <User size={20} />
-                    الشخص المسؤول للاتصال به عند حدوث الخطر
-                  </h4>
-                  <p className="text-gray-700 text-right text-lg">
-                    {getResponsibleEntity(selectedRisk.responsibleId)?.contactName || 'غير محدد'}
-                  </p>
-                </div>
-
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <h4 className="text-lg font-bold text-right mb-3 flex items-center justify-end gap-2">
-                    <Phone size={20} />
-                    وسائل الاتصال
-                  </h4>
-                  <div className="space-y-2 text-right">
-                    <p className="text-gray-700 text-lg">
-                      {getResponsibleEntity(selectedRisk.responsibleId)?.contactPhoneNumber || 'غير متوفر'}
-                    </p>
-                    <p className="text-gray-700 text-base break-all">
-                      {getResponsibleEntity(selectedRisk.responsibleId)?.contactEmail || 'غير متوفر'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <h4 className="text-lg font-bold text-right mb-3 flex items-center justify-end gap-2">
-                    <MapPin size={20} />
-                    مكان الخطر
-                  </h4>
-                  <p className="text-gray-700 text-right text-lg">{selectedRisk.location}</p>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 rounded-xl p-6">
-                <h4 className="text-lg font-bold text-right mb-3 flex items-center justify-end gap-2">
-                  <Activity size={20} />
-                  القسم
-                </h4>
-                <p className="text-gray-700 text-right text-lg">{selectedRisk.department}</p>
-              </div>
-
-              <div className="bg-gray-50 rounded-xl p-6">
-                <h4 className="text-lg font-bold text-right mb-3 flex items-center justify-end gap-2">
-                  <AlertCircle size={20} />
-                  وصف المخاطرة
-                </h4>
-                <p className="text-gray-700 text-right leading-relaxed">
-                  {selectedRisk.riskDescription}
-                </p>
-              </div>
-
-              {renderListSection(
-                'الأسباب المحتملة لحدوث الخطر',
-                toArray(selectedRisk.riskCauses),
-                <AlertCircle size={20} />,
-                'لا توجد أسباب مسجلة لهذه المخاطرة'
-              )}
-
-              {renderListSection(
-                'الإجراءات التي تتخذها الجهة المسؤولة عند وقوع الخطر',
-                toArray(selectedRisk.riskActions),
-                <Siren size={20} />,
-                'لا توجد إجراءات مسجلة عند وقوع الخطر'
-              )}
-
-              {renderListSection(
-                'الإجراءات الواجب اتباعها لتفادي حدوث تلك المخاطر',
-                toArray(selectedRisk.riskGoals),
-                <ShieldCheck size={20} />,
-                'لا توجد إجراءات وقائية مسجلة لهذه المخاطرة'
-              )}
-
-              {(() => {
-                const responsible = getResponsibleEntity(selectedRisk.responsibleId);
-                return responsible ? (
-                  <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
-                    <h4 className="text-lg font-bold text-right mb-4 flex items-center justify-end gap-2 text-blue-900">
-                      <ClipboardList size={20} />
-                      ملخص جهة التواصل
-                    </h4>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-right">
-                      <div className="bg-white rounded-xl p-4 border">
-                        <div className="flex items-center justify-end gap-2 text-gray-500 mb-2">
-                          <User size={16} />
-                          <span>اسم الجهة</span>
-                        </div>
-                        <div className="font-bold text-blue-900">{responsible.entityName}</div>
-                      </div>
-
-                      <div className="bg-white rounded-xl p-4 border">
-                        <div className="flex items-center justify-end gap-2 text-gray-500 mb-2">
-                          <Phone size={16} />
-                          <span>الهاتف</span>
-                        </div>
-                        <div className="font-bold text-blue-900">{responsible.contactPhoneNumber || '-'}</div>
-                      </div>
-
-                      <div className="bg-white rounded-xl p-4 border">
-                        <div className="flex items-center justify-end gap-2 text-gray-500 mb-2">
-                          <Mail size={16} />
-                          <span>الإيميل</span>
-                        </div>
-                        <div className="font-bold text-blue-900 break-all">{responsible.contactEmail || '-'}</div>
-                      </div>
-                    </div>
-                  </div>
-                ) : null;
-              })()}
-            </div>
-
-            <div className="border-t border-gray-200 p-6">
-              <button
-                onClick={closeModal}
-                className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-lg hover:bg-blue-700 transition-colors"
-              >
-                إغلاق
-              </button>
-            </div>
-          </div>
-        </div>
+        <RiskDetailModal
+          risk={selectedRisk}
+          responsibleEntities={responsibleEntities}
+          onClose={closeModal}
+        />
       )}
     </div>
   );
