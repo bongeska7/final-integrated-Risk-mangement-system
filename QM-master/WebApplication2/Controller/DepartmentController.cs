@@ -16,7 +16,7 @@ namespace QM.Controller
     {
         public DepartmentsController(IUnitOfWork uow) : base(uow) { }
 
-        [Authorize(Roles = "Initi,Initiator,Risk Manager,Admin")]
+        [Authorize(Roles = "Initi,Initiator,Manager,Admin")]
         [HttpGet]
         public async Task<IActionResult> GetDepartments(
             int? id = null,

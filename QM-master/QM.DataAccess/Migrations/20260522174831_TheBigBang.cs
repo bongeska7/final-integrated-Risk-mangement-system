@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace QM.DataAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class bigBang : Migration
+    public partial class TheBigBang : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -47,12 +47,11 @@ namespace QM.DataAccess.Migrations
                 name: "AspNetUsers",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EmployeeId = table.Column<int>(type: "int", nullable: false),
+                    UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     RefreshToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     RefreshTokenExpiryTime = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ManagerId = table.Column<int>(type: "int", nullable: true),
-                    UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedEmail = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -69,7 +68,8 @@ namespace QM.DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                    table.PrimaryKey("PK_AspNetUsers", x => x.EmployeeId);
+                    table.CheckConstraint("chk_user_id_6digits", "[EmployeeId] >= 100000 AND [EmployeeId] <= 999999");
                 });
 
             migrationBuilder.CreateTable(
@@ -120,7 +120,20 @@ namespace QM.DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Entities",
+                name: "Departments",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Departments", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Responsible",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -132,20 +145,7 @@ namespace QM.DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Entities", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Responsibles",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Responsibles", x => x.Id);
+                    table.PrimaryKey("PK_Responsible", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -154,7 +154,6 @@ namespace QM.DataAccess.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    GoalReference = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     GoalDescription = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
@@ -200,7 +199,7 @@ namespace QM.DataAccess.Migrations
                         name: "FK_AspNetUserClaims_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
+                        principalColumn: "EmployeeId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -220,7 +219,7 @@ namespace QM.DataAccess.Migrations
                         name: "FK_AspNetUserLogins_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
+                        principalColumn: "EmployeeId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -244,7 +243,7 @@ namespace QM.DataAccess.Migrations
                         name: "FK_AspNetUserRoles_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
+                        principalColumn: "EmployeeId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -264,38 +263,30 @@ namespace QM.DataAccess.Migrations
                         name: "FK_AspNetUserTokens_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
+                        principalColumn: "EmployeeId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Risks",
+                name: "Notifications",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    RiskName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    RiskDescription = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Location = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    likelihood = table.Column<int>(type: "int", nullable: true),
-                    Impact = table.Column<int>(type: "int", nullable: true),
-                    Custom = table.Column<bool>(type: "bit", nullable: true),
-                    UserId = table.Column<int>(type: "int", nullable: true),
-                    CategoryID = table.Column<int>(type: "int", nullable: false)
+                    requestId = table.Column<int>(type: "int", nullable: false),
+                    status = table.Column<int>(type: "int", nullable: true),
+                    requestType = table.Column<int>(type: "int", nullable: false),
+                    createdAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UserId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Risks", x => x.Id);
+                    table.PrimaryKey("PK_Notifications", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Risks_AspNetUsers_UserId",
+                        name: "FK_Notifications_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Risks_Categories_CategoryID",
-                        column: x => x.CategoryID,
-                        principalTable: "Categories",
-                        principalColumn: "Id",
+                        principalColumn: "EmployeeId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -326,29 +317,37 @@ namespace QM.DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ActionResponsibleMapping",
+                name: "Risks",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    ActionId = table.Column<int>(type: "int", nullable: false),
-                    ResponsibleId = table.Column<int>(type: "int", nullable: false)
+                    Department = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RiskName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RiskDescription = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Location = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    likelihood = table.Column<int>(type: "int", nullable: true),
+                    Impact = table.Column<int>(type: "int", nullable: true),
+                    Custom = table.Column<bool>(type: "bit", nullable: true),
+                    ReDirected = table.Column<bool>(type: "bit", nullable: true),
+                    Status = table.Column<int>(type: "int", nullable: true),
+                    UserId = table.Column<int>(type: "int", nullable: true),
+                    CategoryName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ResponsibleId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ActionResponsibleMapping", x => x.Id);
+                    table.PrimaryKey("PK_Risks", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ActionResponsibleMapping_Actions_ActionId",
-                        column: x => x.ActionId,
-                        principalTable: "Actions",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        name: "FK_Risks_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "EmployeeId");
                     table.ForeignKey(
-                        name: "FK_ActionResponsibleMapping_Entities_ResponsibleId",
+                        name: "FK_Risks_Responsible_ResponsibleId",
                         column: x => x.ResponsibleId,
-                        principalTable: "Entities",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalTable: "Responsible",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -438,21 +437,22 @@ namespace QM.DataAccess.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    WorkEntity = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Department = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Year = table.Column<DateTime>(type: "datetime2", nullable: true),
                     Category = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Likelihood = table.Column<int>(type: "int", nullable: true),
                     Impact = table.Column<int>(type: "int", nullable: true),
                     ExpectedTime = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Responsible = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Status = table.Column<int>(type: "int", nullable: true),
                     Occured = table.Column<bool>(type: "bit", nullable: true),
                     PostLikelihood = table.Column<int>(type: "int", nullable: true),
                     PostImpact = table.Column<int>(type: "int", nullable: true),
-                    report = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    rejectReason = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ReDirected = table.Column<bool>(type: "bit", nullable: true),
                     UserId = table.Column<int>(type: "int", nullable: true),
-                    RiskId = table.Column<int>(type: "int", nullable: true)
+                    RiskId = table.Column<int>(type: "int", nullable: true),
+                    ResponsibleId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -461,6 +461,11 @@ namespace QM.DataAccess.Migrations
                         name: "FK_RiskRequests_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
+                        principalColumn: "EmployeeId");
+                    table.ForeignKey(
+                        name: "FK_RiskRequests_Responsible_ResponsibleId",
+                        column: x => x.ResponsibleId,
+                        principalTable: "Responsible",
                         principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_RiskRequests_Risks_RiskId",
@@ -522,29 +527,27 @@ namespace QM.DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "RequestEntityMappings",
+                name: "RequestStrategicGoalMapping",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    RequestID = table.Column<int>(type: "int", nullable: false),
-                    ResponsibleID = table.Column<int>(type: "int", nullable: false)
+                    RequestID = table.Column<int>(type: "int", nullable: true),
+                    StrategicGoalID = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_RequestEntityMappings", x => x.Id);
+                    table.PrimaryKey("PK_RequestStrategicGoalMapping", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_RequestEntityMappings_Entities_ResponsibleID",
-                        column: x => x.ResponsibleID,
-                        principalTable: "Entities",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_RequestEntityMappings_RiskRequests_RequestID",
+                        name: "FK_RequestStrategicGoalMapping_RiskRequests_RequestID",
                         column: x => x.RequestID,
                         principalTable: "RiskRequests",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_RequestStrategicGoalMapping_StrategicGoals_StrategicGoalID",
+                        column: x => x.StrategicGoalID,
+                        principalTable: "StrategicGoals",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.InsertData(
@@ -553,7 +556,7 @@ namespace QM.DataAccess.Migrations
                 values: new object[,]
                 {
                     { 1, null, "Initi", "INITI" },
-                    { 2, null, "Risk Manager", "RISK MANAGER" },
+                    { 2, null, "Manager", "Manager" },
                     { 3, null, "Admin", "ADMIN" }
                 });
 
@@ -566,16 +569,6 @@ namespace QM.DataAccess.Migrations
                 name: "IX_ActionCauseMappings_CauseID",
                 table: "ActionCauseMappings",
                 column: "CauseID");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ActionResponsibleMapping_ActionId",
-                table: "ActionResponsibleMapping",
-                column: "ActionId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ActionResponsibleMapping_ResponsibleId",
-                table: "ActionResponsibleMapping",
-                column: "ResponsibleId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -612,9 +605,12 @@ namespace QM.DataAccess.Migrations
             migrationBuilder.CreateIndex(
                 name: "UserNameIndex",
                 table: "AspNetUsers",
-                column: "NormalizedUserName",
-                unique: true,
-                filter: "[NormalizedUserName] IS NOT NULL");
+                column: "NormalizedUserName");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notifications_UserId",
+                table: "Notifications",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RequestActionMappings_ActionID",
@@ -637,14 +633,14 @@ namespace QM.DataAccess.Migrations
                 column: "RequestID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_RequestEntityMappings_RequestID",
-                table: "RequestEntityMappings",
+                name: "IX_RequestStrategicGoalMapping_RequestID",
+                table: "RequestStrategicGoalMapping",
                 column: "RequestID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_RequestEntityMappings_ResponsibleID",
-                table: "RequestEntityMappings",
-                column: "ResponsibleID");
+                name: "IX_RequestStrategicGoalMapping_StrategicGoalID",
+                table: "RequestStrategicGoalMapping",
+                column: "StrategicGoalID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RiskActionMappings_ActionID",
@@ -677,6 +673,11 @@ namespace QM.DataAccess.Migrations
                 column: "StrategicGoalId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_RiskRequests_ResponsibleId",
+                table: "RiskRequests",
+                column: "ResponsibleId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_RiskRequests_RiskId",
                 table: "RiskRequests",
                 column: "RiskId");
@@ -687,9 +688,9 @@ namespace QM.DataAccess.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Risks_CategoryID",
+                name: "IX_Risks_ResponsibleId",
                 table: "Risks",
-                column: "CategoryID");
+                column: "ResponsibleId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Risks_UserId",
@@ -702,9 +703,6 @@ namespace QM.DataAccess.Migrations
         {
             migrationBuilder.DropTable(
                 name: "ActionCauseMappings");
-
-            migrationBuilder.DropTable(
-                name: "ActionResponsibleMapping");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
@@ -725,16 +723,22 @@ namespace QM.DataAccess.Migrations
                 name: "AuditLogs");
 
             migrationBuilder.DropTable(
+                name: "Categories");
+
+            migrationBuilder.DropTable(
+                name: "Departments");
+
+            migrationBuilder.DropTable(
+                name: "Notifications");
+
+            migrationBuilder.DropTable(
                 name: "RequestActionMappings");
 
             migrationBuilder.DropTable(
                 name: "RequestCauseMappings");
 
             migrationBuilder.DropTable(
-                name: "RequestEntityMappings");
-
-            migrationBuilder.DropTable(
-                name: "Responsibles");
+                name: "RequestStrategicGoalMapping");
 
             migrationBuilder.DropTable(
                 name: "RiskActionMappings");
@@ -747,9 +751,6 @@ namespace QM.DataAccess.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
-
-            migrationBuilder.DropTable(
-                name: "Entities");
 
             migrationBuilder.DropTable(
                 name: "RiskRequests");
@@ -770,7 +771,7 @@ namespace QM.DataAccess.Migrations
                 name: "AspNetUsers");
 
             migrationBuilder.DropTable(
-                name: "Categories");
+                name: "Responsible");
         }
     }
 }

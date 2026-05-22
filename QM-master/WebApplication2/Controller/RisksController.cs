@@ -33,14 +33,14 @@ namespace QM.Controller
             string.Equals(role, "Initiator", StringComparison.OrdinalIgnoreCase);
 
         private bool IsManager(string? role) =>
-            string.Equals(role, "Risk Manager", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(role, "Manager", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(role, "Manager", StringComparison.OrdinalIgnoreCase);
 
         private bool IsAdmin(string? role) =>
             string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase);
 
 
-        [Authorize(Roles = "Initi,Initiator,Risk Manager,Admin")]
+        [Authorize(Roles = "Initi,Initiator,Manager,Admin")]
         [HttpGet]
         public async Task<IActionResult> GetRisks(
             int? id = null,
@@ -135,7 +135,7 @@ namespace QM.Controller
         }
 
 
-        [Authorize(Roles = "Initi,Initiator,Risk Manager,Admin")]
+        [Authorize(Roles = "Initi,Initiator,Manager,Admin")]
         [HttpPost("addUpdate")]
         public async Task<IActionResult> AddUpdateRisk([FromBody] RiskDto dto)
         {

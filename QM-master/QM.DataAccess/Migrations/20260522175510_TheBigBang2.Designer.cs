@@ -12,8 +12,8 @@ using QM.DataAccess.Data;
 namespace QM.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260424131010_startgicgoalmappingadd")]
-    partial class startgicgoalmappingadd
+    [Migration("20260522175510_TheBigBang2")]
+    partial class TheBigBang2
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -102,8 +102,8 @@ namespace QM.DataAccess.Migrations
                         new
                         {
                             Id = 2,
-                            Name = "Risk Manager",
-                            NormalizedName = "RISK MANAGER"
+                            Name = "Manager",
+                            NormalizedName = "Manager"
                         },
                         new
                         {
@@ -493,10 +493,8 @@ namespace QM.DataAccess.Migrations
             modelBuilder.Entity("QM.Models.DataModels.User", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("int")
+                        .HasColumnName("EmployeeId");
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
@@ -560,11 +558,14 @@ namespace QM.DataAccess.Migrations
                         .HasDatabaseName("EmailIndex");
 
                     b.HasIndex("NormalizedUserName")
-                        .IsUnique()
-                        .HasDatabaseName("UserNameIndex")
-                        .HasFilter("[NormalizedUserName] IS NOT NULL");
+                        .HasDatabaseName("UserNameIndex");
 
-                    b.ToTable("AspNetUsers", (string)null);
+                    b.ToTable("AspNetUsers", null, t =>
+                        {
+                            t.HasCheckConstraint("chk_ManagerId_6digits", "[ManagerId] >= 100000 AND [ManagerId] <= 999999");
+
+                            t.HasCheckConstraint("chk_user_id_6digits", "[EmployeeId] >= 100000 AND [EmployeeId] <= 999999");
+                        });
                 });
 
             modelBuilder.Entity("QM.Models.Mapping.ActionCauseMapping", b =>
@@ -889,7 +890,7 @@ namespace QM.DataAccess.Migrations
                         .IsRequired();
 
                     b.HasOne("QM.Models.DataModels.Request", "Request")
-                        .WithMany()
+                        .WithMany("RequestCauses")
                         .HasForeignKey("RequestID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -992,6 +993,8 @@ namespace QM.DataAccess.Migrations
             modelBuilder.Entity("QM.Models.DataModels.Request", b =>
                 {
                     b.Navigation("RequestActions");
+
+                    b.Navigation("RequestCauses");
 
                     b.Navigation("RequestGoals");
                 });

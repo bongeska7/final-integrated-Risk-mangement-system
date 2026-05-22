@@ -16,7 +16,7 @@ namespace QM.Controller
     {
         public StrategicGoalsController(IUnitOfWork uow) : base(uow) { }
 
-        [Authorize(Roles = "Initi,Initiator,Risk Manager,Admin")]
+        [Authorize(Roles = "Initi,Initiator,Manager,Admin")]
         [HttpGet]
         public async Task<IActionResult> GetStrategicGoals(
             int? id = null,

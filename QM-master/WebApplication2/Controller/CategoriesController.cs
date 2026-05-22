@@ -17,7 +17,7 @@ namespace QM.Controller
         public CategoriesController(IUnitOfWork uow) : base(uow) { }
 
         // Any authenticated user can read.
-        [Authorize(Roles = "Initi,Initiator,Risk Manager,Admin")]
+        [Authorize(Roles = "Initi,Initiator,Manager,Admin")]
         [HttpGet]
         public async Task<IActionResult> GetCategories(
             int? id = null,

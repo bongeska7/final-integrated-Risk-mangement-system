@@ -12,8 +12,8 @@ using QM.DataAccess.Data;
 namespace QM.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260212145141_addRejectReasonToRequest")]
-    partial class addRejectReasonToRequest
+    [Migration("20260522174831_TheBigBang")]
+    partial class TheBigBang
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -102,8 +102,8 @@ namespace QM.DataAccess.Migrations
                         new
                         {
                             Id = 2,
-                            Name = "Risk Manager",
-                            NormalizedName = "RISK MANAGER"
+                            Name = "Manager",
+                            NormalizedName = "Manager"
                         },
                         new
                         {
@@ -293,6 +293,37 @@ namespace QM.DataAccess.Migrations
                     b.ToTable("Departments");
                 });
 
+            modelBuilder.Entity("QM.Models.DataModels.NotificationModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnOrder(0);
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("createdAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("requestId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("requestType")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Notifications");
+                });
+
             modelBuilder.Entity("QM.Models.DataModels.Request", b =>
                 {
                     b.Property<int>("Id")
@@ -328,6 +359,9 @@ namespace QM.DataAccess.Migrations
 
                     b.Property<int?>("PostLikelihood")
                         .HasColumnType("int");
+
+                    b.Property<bool?>("ReDirected")
+                        .HasColumnType("bit");
 
                     b.Property<int?>("ResponsibleId")
                         .HasColumnType("int");
@@ -409,6 +443,9 @@ namespace QM.DataAccess.Migrations
                     b.Property<string>("Location")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool?>("ReDirected")
+                        .HasColumnType("bit");
+
                     b.Property<int?>("ResponsibleId")
                         .HasColumnType("int");
 
@@ -417,6 +454,9 @@ namespace QM.DataAccess.Migrations
 
                     b.Property<string>("RiskName")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
 
                     b.Property<int?>("UserId")
                         .HasColumnType("int");
@@ -445,9 +485,6 @@ namespace QM.DataAccess.Migrations
                     b.Property<string>("GoalDescription")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("GoalReference")
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("Id");
 
                     b.ToTable("StrategicGoals");
@@ -456,10 +493,8 @@ namespace QM.DataAccess.Migrations
             modelBuilder.Entity("QM.Models.DataModels.User", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("int")
+                        .HasColumnName("EmployeeId");
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
@@ -523,11 +558,12 @@ namespace QM.DataAccess.Migrations
                         .HasDatabaseName("EmailIndex");
 
                     b.HasIndex("NormalizedUserName")
-                        .IsUnique()
-                        .HasDatabaseName("UserNameIndex")
-                        .HasFilter("[NormalizedUserName] IS NOT NULL");
+                        .HasDatabaseName("UserNameIndex");
 
-                    b.ToTable("AspNetUsers", (string)null);
+                    b.ToTable("AspNetUsers", null, t =>
+                        {
+                            t.HasCheckConstraint("chk_user_id_6digits", "[EmployeeId] >= 100000 AND [EmployeeId] <= 999999");
+                        });
                 });
 
             modelBuilder.Entity("QM.Models.Mapping.ActionCauseMapping", b =>
@@ -600,6 +636,30 @@ namespace QM.DataAccess.Migrations
                     b.HasIndex("RequestID");
 
                     b.ToTable("RequestCauseMappings");
+                });
+
+            modelBuilder.Entity("QM.Models.Mapping.RequestStrategicGoalMapping", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnOrder(0);
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("RequestID")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("StrategicGoalID")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RequestID");
+
+                    b.HasIndex("StrategicGoalID");
+
+                    b.ToTable("RequestStrategicGoalMapping");
                 });
 
             modelBuilder.Entity("QM.Models.Mapping.RiskActionMapping", b =>
@@ -734,6 +794,17 @@ namespace QM.DataAccess.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("QM.Models.DataModels.NotificationModel", b =>
+                {
+                    b.HasOne("QM.Models.DataModels.User", "User")
+                        .WithMany("notifications")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("QM.Models.DataModels.Request", b =>
                 {
                     b.HasOne("QM.Models.DataModels.Responsible", "Responsible")
@@ -798,7 +869,7 @@ namespace QM.DataAccess.Migrations
                         .IsRequired();
 
                     b.HasOne("QM.Models.DataModels.Request", "Request")
-                        .WithMany("RequestAction")
+                        .WithMany("RequestActions")
                         .HasForeignKey("RequestID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -817,7 +888,7 @@ namespace QM.DataAccess.Migrations
                         .IsRequired();
 
                     b.HasOne("QM.Models.DataModels.Request", "Request")
-                        .WithMany()
+                        .WithMany("RequestCauses")
                         .HasForeignKey("RequestID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -825,6 +896,21 @@ namespace QM.DataAccess.Migrations
                     b.Navigation("Cause");
 
                     b.Navigation("Request");
+                });
+
+            modelBuilder.Entity("QM.Models.Mapping.RequestStrategicGoalMapping", b =>
+                {
+                    b.HasOne("QM.Models.DataModels.Request", "Request")
+                        .WithMany("RequestGoals")
+                        .HasForeignKey("RequestID");
+
+                    b.HasOne("QM.Models.DataModels.StrategicGoal", "StrategicGoal")
+                        .WithMany("RequestGoals")
+                        .HasForeignKey("StrategicGoalID");
+
+                    b.Navigation("Request");
+
+                    b.Navigation("StrategicGoal");
                 });
 
             modelBuilder.Entity("QM.Models.Mapping.RiskActionMapping", b =>
@@ -904,7 +990,11 @@ namespace QM.DataAccess.Migrations
 
             modelBuilder.Entity("QM.Models.DataModels.Request", b =>
                 {
-                    b.Navigation("RequestAction");
+                    b.Navigation("RequestActions");
+
+                    b.Navigation("RequestCauses");
+
+                    b.Navigation("RequestGoals");
                 });
 
             modelBuilder.Entity("QM.Models.DataModels.Responsible", b =>
@@ -927,11 +1017,15 @@ namespace QM.DataAccess.Migrations
 
             modelBuilder.Entity("QM.Models.DataModels.StrategicGoal", b =>
                 {
+                    b.Navigation("RequestGoals");
+
                     b.Navigation("RiskGoals");
                 });
 
             modelBuilder.Entity("QM.Models.DataModels.User", b =>
                 {
+                    b.Navigation("notifications");
+
                     b.Navigation("request");
 
                     b.Navigation("risk");

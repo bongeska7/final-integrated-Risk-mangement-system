@@ -67,7 +67,7 @@ namespace QM.Controller
         }
 
         // Any authenticated user: only their own audit entries.
-        [Authorize(Roles = "Initi,Initiator,Risk Manager,Admin")]
+        [Authorize(Roles = "Initi,Initiator,Manager,Admin")]
         [HttpGet("my")]
         public async Task<IActionResult> GetMyLogs(
             string? Type = null,

@@ -17,7 +17,7 @@ namespace QM.Controller
     {
         public CausesController(IUnitOfWork uow) : base(uow) { }
 
-        [Authorize(Roles = "Initi,Initiator,Risk Manager,Admin")]
+        [Authorize(Roles = "Initi,Initiator,Manager,Admin")]
         [HttpGet]
         public async Task<IActionResult> GetCauses(
             int? id = null,
@@ -58,7 +58,7 @@ namespace QM.Controller
 
         // Initiators, Managers, and Admins can all add causes.
         // Custom=true unless the creator is Admin.
-        [Authorize(Roles = "Initi,Initiator,Risk Manager,Admin")]
+        [Authorize(Roles = "Initi,Initiator,Manager,Admin")]
         [HttpPost("create")]
         public async Task<IActionResult> CreateCause([FromBody] Cause cause)
         {

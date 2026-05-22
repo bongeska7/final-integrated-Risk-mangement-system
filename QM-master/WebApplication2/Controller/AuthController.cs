@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.V4.Pages.Account.Internal;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -55,8 +56,6 @@ namespace QM.Controller
                     ExpiresAt = 3600
                 });
             }
-            //AQAAAAIAAYagAAAAEC4SVa0U/Y2NYcTg3Bx5v6J86N3DIiIhHns3uSEdcaLxbLz5ZL7snfXCj0I2Q+7/Tg==
-            //AQAAAAIAAYagAAAAEC4SVa0U/Y2NYcTg3Bx5v6J86N3DIiIhHns3uSEdcaLxbLz5ZL7snfXCj0I2Q+7/Tg==
             return Unauthorized(new { Message = "Invalid username or password"  });
         }
 
@@ -94,7 +93,6 @@ namespace QM.Controller
                 RefreshToken = newRefreshToken
             });
         }
-
-
+        
     }
 }

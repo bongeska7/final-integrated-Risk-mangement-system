@@ -32,14 +32,14 @@ namespace QM.Controller
             string.Equals(role, "Initiator", StringComparison.OrdinalIgnoreCase);
 
         private bool IsManager(string? role) =>
-            string.Equals(role, "Risk Manager", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(role, "Manager", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(role, "Manager", StringComparison.OrdinalIgnoreCase);
 
         private bool IsAdmin(string? role) =>
             string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase);
 
 
-        [Authorize(Roles = "Initi,Initiator,Risk Manager,Admin")]
+        [Authorize(Roles = "Initi,Initiator,Manager,Admin")]
         [HttpGet]
         public async Task<IActionResult> GetRequests(
             int? id = null,
@@ -76,7 +76,7 @@ namespace QM.Controller
             }
             else if (IsManager(userRole))
             {
-                // Risk Manager: their own requests AND requests by users whose ManagerId == this user's id.
+                // Manager: their own requests AND requests by users whose ManagerId == this user's id.
                 filter = filter.And(r =>
                     r.UserId == userId ||
                     (r.User != null && r.User.ManagerId == userId)
@@ -144,7 +144,7 @@ namespace QM.Controller
         }
 
 
-        [Authorize(Roles = "Initi,Initiator,Risk Manager,Admin")]
+        [Authorize(Roles = "Initi,Initiator,Manager,Admin")]
         [HttpPost("addUpdate")]
         public async Task<IActionResult> AddUpdate([FromBody] RequestDto dto)
         {

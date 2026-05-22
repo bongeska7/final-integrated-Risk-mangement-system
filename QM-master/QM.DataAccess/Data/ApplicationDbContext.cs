@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using QM.Models.DataModels;
@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace QM.DataAccess.Data
 {
-    public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<int>, int>
+    public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<int>, int>  
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -135,13 +135,30 @@ namespace QM.DataAccess.Data
         {
             base.OnModelCreating(builder);
             SeedRoles(builder);
+            builder.Entity<User>()
+                .Property(u => u.Id)
+                .ValueGeneratedNever();
+            builder.Entity<User>()
+                .ToTable(t => t.HasCheckConstraint("chk_user_id_6digits", "[EmployeeId] >= 100000 AND [EmployeeId] <= 999999"));
+
+            // Replace the default unique index on UserName with a non-unique one
+            // to allow duplicate usernames
+            builder.Entity<User>()
+                .HasIndex(u => u.NormalizedUserName)
+                .HasDatabaseName("UserNameIndex")
+                .IsUnique(false);
+            builder.Entity<User>()
+                .Property(u => u.ManagerId)
+                .ValueGeneratedNever();
+            builder.Entity<User>()
+                .ToTable(t => t.HasCheckConstraint("chk_ManagerId_6digits", "[ManagerId] >= 100000 AND [ManagerId] <= 999999"));
         }
 
         private void SeedRoles(ModelBuilder builder)
         {
             builder.Entity<IdentityRole<int>>().HasData(
                 new IdentityRole<int> { Id = 1, Name = "Initi", NormalizedName = "INITI" },
-                new IdentityRole<int> { Id = 2, Name = "Risk Manager", NormalizedName = "RISK MANAGER" },
+                new IdentityRole<int> { Id = 2, Name = "Manager", NormalizedName = "Manager" },
                 new IdentityRole<int> { Id = 3, Name = "Admin", NormalizedName = "ADMIN" }
             );
         }

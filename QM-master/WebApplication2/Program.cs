@@ -1,13 +1,14 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using QM.DataAccess.Data;
-
 using QM.DataAccess.Repo;
 using QM.DataAccess.Repo.IRepo;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using QM.Middleware;
 using QM.Models.DataModels;
+using System.Text;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,11 +19,24 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>options.UseSqlServ
 
 builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
 {
+   
     options.Password.RequireDigit = true;
     options.Password.RequiredLength = 8;
+    options.User.RequireUniqueEmail = false;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
+
+// Remove the default UserValidator that enforces unique usernames
+var defaultValidator = builder.Services
+    .Where(s => s.ServiceType == typeof(IUserValidator<User>))
+    .ToList();
+foreach (var validator in defaultValidator)
+{
+    builder.Services.Remove(validator);
+}
+// Add our custom validator that allows duplicate usernames
+builder.Services.AddTransient<IUserValidator<User>, OptionalUniqueUserNameValidator>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -58,12 +72,22 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddControllers()
+builder.Services.AddControllers(options =>
+    {
+        // Register the centralized validation filter on all controllers.
+        options.Filters.Add<ValidationFilter>();
+    })
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler =
             System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
+
+// Disable the default automatic 400 response so our ValidationFilter handles it.
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(options =>
+{
+    options.SuppressModelStateInvalidFilter = true;
+});
 
 
 
@@ -75,12 +99,14 @@ builder.Services.AddHttpContextAccessor();
 var app = builder.Build();
 
 
-
+// Centralized error handling — catches ALL unhandled exceptions and returns
+// a consistent ApiErrorResponse JSON envelope. Must be registered first so
+// it wraps the entire pipeline.
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
@@ -112,12 +138,13 @@ using (var scope = app.Services.CreateScope())
     var userManager = services.GetRequiredService<UserManager<User>>();
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole<int>>>();
 
+    
     var email = "mohammedarqan@gmail.com";
     var password = "Mohammed@12345"; // Ensure this meets complexity requirements
     var roleName = "Admin";
 
     var email2 = "Othman@gmail.com";
-    var roleName2 = "Risk Manager";
+    var roleName2 = "Manager";
 
     var email3 = "Omar@gmail.com";
     var roleName3 = "Initi";
@@ -143,6 +170,7 @@ using (var scope = app.Services.CreateScope())
     {
         Admin = new User
         {
+            Id = 100000, 
             UserName = email,
             Email = email,
             EmailConfirmed = true
@@ -159,8 +187,10 @@ using (var scope = app.Services.CreateScope())
     {
         Manager = new User
         {
+            Id = 100001, 
             UserName = email2,
             Email = email2,
+            ManagerId = 100000,
             EmailConfirmed = true
         };
 
@@ -175,8 +205,10 @@ using (var scope = app.Services.CreateScope())
     {
         Initi = new User
         {
+            Id = 100002,
             UserName = email3,
             Email = email3,
+            ManagerId = 100001,
             EmailConfirmed = true
         };
 
@@ -189,7 +221,6 @@ using (var scope = app.Services.CreateScope())
     }
 
 }
-
 
 app.Run();
 

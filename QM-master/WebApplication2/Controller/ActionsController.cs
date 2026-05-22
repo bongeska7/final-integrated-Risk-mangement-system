@@ -22,7 +22,7 @@ namespace QM.Controller
     {
         public ActionsController(IUnitOfWork uow) : base(uow) { }
 
-        [Authorize(Roles = "Initi,Initiator,Risk Manager,Admin")]
+        [Authorize(Roles = "Initi,Initiator,Manager,Admin")]
         [HttpGet]
         public async Task<IActionResult> GetActions(
             int? id = null,
@@ -72,7 +72,7 @@ namespace QM.Controller
             return Ok(records);
         }
 
-        [Authorize(Roles = "Initi,Initiator,Risk Manager,Admin")]
+        [Authorize(Roles = "Initi,Initiator,Manager,Admin")]
         [HttpPost("create")]
         public async Task<IActionResult> CreateAction([FromBody] Actions action)
         {
